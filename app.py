@@ -1,74 +1,49 @@
-import streamlit as st
 import requests
-import numpy as np
-import joblib
-
-st.set_page_config(page_title="Toxicity Checker (Demo)", layout="centered")
-
-@st.cache_resource
-def load_artifacts():
-    model = joblib.load("tox_model.joblib")
-    vec = joblib.load("tox_vectorizer.joblib")
-    label = open("tox_label.txt").read().strip()
-    return model, vec, label
-
-model, vec, label_name = load_artifacts()
-
-st.title("Drug Toxicity Checker (Demo)")
-st.write(f"This predicts **{label_name} assay activity** from Tox21 (demo only).")
-
-drug_name = st.text_input("Enter drug/chemical name", value="caffeine")
+from urllib.parse import quote
 
 def pubchem_name_to_smiles(name: str):
-    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{name}/property/CanonicalSMILES/JSON"
-    r = requests.get(url, timeout=15)
-    if r.status_code != 200:
-        return None, f"PubChem lookup failed (status {r.status_code}). Try another name."
+    name = name.strip()
+    if not name:
+        return None, "Please enter a compound name."
+
+    q = quote(name)  # URL-encode spaces/symbols
+
+    # Step 1: get CID(s)
+    cid_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{q}/cids/JSON"
+    r1 = requests.get(cid_url, timeout=20)
     try:
-        js = r.json()
-        smiles = js["PropertyTable"]["Properties"][0]["CanonicalSMILES"]
-        return smiles, None
+        j1 = r1.json()
     except Exception:
-        return None, "Could not parse PubChem response. Try another name."
+        return None, f"PubChem did not return JSON (CID request). Status={r1.status_code}. Response: {r1.text[:200]}"
 
-def explain(smiles: str, topk=12):
-    x = vec.transform([smiles])
-    w = model.coef_[0]
-    feats = np.array(vec.get_feature_names_out())
+    if "Fault" in j1:
+        msg = j1["Fault"].get("Message", "PubChem error")
+        details = j1["Fault"].get("Details", [])
+        more = details[0] if details else ""
+        return None, f"{msg}. {more}".strip()
 
-    if x.nnz == 0:
-        return []
+    cids = j1.get("IdentifierList", {}).get("CID", [])
+    if not cids:
+        return None, "Compound not found in PubChem. Try a different name (generic/chemical name)."
 
-    idxs = x.indices
-    vals = x.data
-    contrib = vals * w[idxs]
+    cid = cids[0]  # pick the first match
 
-    order = np.argsort(np.abs(contrib))[::-1][:topk]
-    rows = []
-    for i in order:
-        rows.append({
-            "ngram": feats[idxs[i]],
-            "count": int(vals[i]),
-            "weight": float(w[idxs[i]]),
-            "contribution": float(contrib[i])
-        })
-    return rows
+    # Step 2: get SMILES using CID
+    smi_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/CanonicalSMILES/JSON"
+    r2 = requests.get(smi_url, timeout=20)
+    try:
+        j2 = r2.json()
+    except Exception:
+        return None, f"PubChem did not return JSON (SMILES request). Status={r2.status_code}. Response: {r2.text[:200]}"
 
-if st.button("Predict toxicity"):
-    smiles, err = pubchem_name_to_smiles(drug_name.strip())
-    if err:
-        st.error(err)
-    else:
-        st.success(f"Found SMILES: {smiles}")
+    if "Fault" in j2:
+        msg = j2["Fault"].get("Message", "PubChem error")
+        details = j2["Fault"].get("Details", [])
+        more = details[0] if details else ""
+        return None, f"{msg}. {more}".strip()
 
-        X = vec.transform([smiles])
-        p = float(model.predict_proba(X)[:, 1][0])
+    props = j2.get("PropertyTable", {}).get("Properties", [])
+    if not props or "CanonicalSMILES" not in props[0]:
+        return None, "PubChem returned no SMILES for this compound."
 
-        st.metric("Predicted probability (toxic in this assay)", f"{p:.3f}")
-
-        st.write("Prediction:", "**TOXIC**" if p >= 0.5 else "**NON-TOXIC**")
-
-        st.subheader("Explanation (top contributing SMILES patterns)")
-        st.write("Positive contribution pushes towards TOXIC. Negative pushes towards NON-TOXIC.")
-        rows = explain(smiles, topk=12)
-        st.dataframe(rows, use_container_width=True)
+    return props[0]["CanonicalSMILES"], None
