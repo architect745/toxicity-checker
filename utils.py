@@ -91,11 +91,48 @@ def top_global_ngrams(model, vec, k=12):
 def inject_css():
     st.markdown("""
     <style>
-      .block-container {max-width: 980px; padding-top: 1.6rem; padding-bottom: 2rem;}
-      .hero {padding: 18px 18px; border-radius: 18px; border: 1px solid rgba(49,51,63,.2); margin-bottom: 14px;}
-      .card {padding: 16px 16px; border-radius: 18px; border: 1px solid rgba(49,51,63,.2); margin-bottom: 14px;}
-      .muted {opacity: 0.75; font-size: 0.95rem;}
-      .badge {display:inline-block; padding: .25rem .6rem; border-radius: 999px;
-              border: 1px solid rgba(49,51,63,.25); font-size: .85rem; margin-right: .35rem;}
+      /* Page background gradient */
+      [data-testid="stAppViewContainer"]{
+        background: radial-gradient(1200px circle at 10% 10%, rgba(108,99,255,.20), transparent 45%),
+                    radial-gradient(1200px circle at 90% 20%, rgba(0,200,255,.14), transparent 40%),
+                    linear-gradient(180deg, #f7f7ff 0%, #f6f7fb 60%, #f2f4ff 100%);
+      }
+
+      /* Center width + spacing */
+      .block-container {max-width: 1050px; padding-top: 1.4rem; padding-bottom: 2rem;}
+
+      /* Card */
+      .card{
+        background: rgba(255,255,255,.75);
+        border: 1px solid rgba(15,23,42,.10);
+        border-radius: 18px;
+        padding: 18px 18px;
+        box-shadow: 0 10px 30px rgba(17,24,39,.08);
+        backdrop-filter: blur(8px);
+        margin-bottom: 14px;
+      }
+
+      /* Fade-in animation */
+      @keyframes fadeUp {
+        from {opacity: 0; transform: translateY(10px);}
+        to   {opacity: 1; transform: translateY(0);}
+      }
+      .fadeUp{ animation: fadeUp .5s ease-out both; }
+
+      /* Button styling */
+      .stButton button{
+        border-radius: 999px !important;
+        padding: .55rem 1rem !important;
+        border: 1px solid rgba(15,23,42,.12) !important;
+        box-shadow: 0 10px 25px rgba(108,99,255,.12) !important;
+      }
+      .stButton button:hover{
+        transform: translateY(-1px);
+        transition: 0.15s ease;
+      }
+
+      /* Hide Streamlit footer */
+      footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
+
