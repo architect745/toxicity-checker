@@ -7,8 +7,8 @@ inject_css()
 _, _, label_name = load_artifacts()
 
 st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
-st.markdown("## ℹ️ About this Mini Project")
-st.markdown("<div class='muted'>Explainable AI demo for drug toxicity prediction.</div>", unsafe_allow_html=True)
+st.markdown("## About this Mini Project")
+st.markdown("<div class='muted'>Explainable AI for drug toxicity prediction (demo).</div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
@@ -39,20 +39,14 @@ st.write(
 )
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Option C credits section (professional cards) ---
+# ---- Option B: professional author block ----
 st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
-st.subheader("Credits")
+st.subheader("Project Authors")
 st.markdown(
     """
-    <div style="display:flex; gap:18px; flex-wrap:wrap;">
-      <div style="flex:1; min-width:220px; padding:12px 14px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:rgba(255,255,255,.55);">
-        <div style="font-weight:700;">Archit Jee</div>
-        <div class="muted">Developer</div>
-      </div>
-      <div style="flex:1; min-width:220px; padding:12px 14px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:rgba(255,255,255,.55);">
-        <div style="font-weight:700;">Adarsh Singh</div>
-        <div class="muted">Developer</div>
-      </div>
+    <div class="muted">
+      <div><b>Archit Jee</b></div>
+      <div><b>Adarsh Singh</b></div>
     </div>
     """,
     unsafe_allow_html=True
