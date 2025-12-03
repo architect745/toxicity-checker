@@ -6,31 +6,35 @@ inject_css()
 
 _, _, label_name = load_artifacts()
 
-st.markdown('<div class="hero">', unsafe_allow_html=True)
+st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
 st.markdown("## ℹ️ About this Mini Project")
+st.markdown("<div class='muted'>Explainable AI for drug toxicity prediction (demo).</div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.subheader("Goal")
-st.write("Build an **Explainable AI** demo for drug discovery: predict a toxicity assay label and explain the decision.")
-st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.subheader("How it works (simple)")
+st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
+st.subheader("What it does")
 st.write(
-    "1) User types compound name\n"
-    "2) App fetches SMILES from PubChem\n"
-    "3) Convert SMILES → character n-grams\n"
-    "4) Logistic Regression predicts probability\n"
-    "5) Show top n-grams that influenced the output"
+    "You type a compound name. The app fetches its SMILES from PubChem, then a trained model predicts "
+    f"the toxicity label **{label_name}**, and shows which SMILES patterns influenced the result."
 )
 st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
+st.subheader("How it works (simple steps)")
+st.write(
+    "1) Input drug/compound name\n"
+    "2) PubChem API returns SMILES\n"
+    "3) SMILES is converted into character n-grams\n"
+    "4) Logistic Regression predicts probability\n"
+    "5) Explanation shows top n-grams pushing decision up/down"
+)
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
 st.subheader("Limitations (say this to teacher)")
 st.write(
-    f"- Prediction is for **one dataset label** ({label_name}), not real human safety.\n"
-    "- Explanations are SMILES text patterns; they are **simple but interpretable**.\n"
-    "- PubChem name matching can fail for brand names or mixtures."
+    "- This is **dataset-based** and predicts one assay label, not full human safety.\n"
+    "- PubChem lookup can fail for brand names or mixtures.\n"
+    "- Explanations are text-pattern-based (simple, but interpretable)."
 )
 st.markdown('</div>', unsafe_allow_html=True)
