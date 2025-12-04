@@ -27,41 +27,4 @@ def home():
 
     with col1:
         st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
-        st.markdown('<div class="hero-title">Toxicity Checker</div>', unsafe_allow_html=True)
-        st.markdown(
-            "<div class='muted'>Type a compound name → fetch SMILES from PubChem → predict toxicity → explain why.</div>",
-            unsafe_allow_html=True
-        )
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<span class="badge">Model: Logistic Regression</span>', unsafe_allow_html=True)
-        st.markdown('<span class="badge">Features: SMILES n-grams</span>', unsafe_allow_html=True)
-        st.markdown('<span class="badge">Explainable output</span>', unsafe_allow_html=True)
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.write(f"Dataset label used: **{label_name}** (demo only; not medical advice).")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col2:
-        st.markdown('<div class="card fadeUp floaty">', unsafe_allow_html=True)
-        st.markdown("#### Overview")
-        if lottie:
-            st_lottie(lottie, height=220, key="home_lottie")
-        else:
-            st.write("Animation failed to load.")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
-    st.subheader("Try these examples")
-    st.write("caffeine, aspirin, ibuprofen, metformin, acetaminophen")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-# ---------- Top navigation ----------
-pages = [
-    st.Page(home, title="Home", icon="🏠", default=True),
-    st.Page("pages/1_Predict.py", title="Predict", icon="🔮"),
-    st.Page("pages/2_Explain.py", title="Explain", icon="🧠"),
-    st.Page("pages/3_About.py", title="About", icon="ℹ️"),
-]
-
-nav = st.navigation(pages, position="top")
-nav.run()
+        st.markdown('<div class="hero-tit
