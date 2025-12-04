@@ -51,15 +51,12 @@ def home():
         st.write(f"Dataset label used: **{label_name}** (demo only; not medical advice).")
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # Right column: show ONLY the animation (no "Overview" title)
     with col2:
-        st.markdown('<div class="card fadeUp floaty">', unsafe_allow_html=True)
-        st.markdown("#### Overview")
-
-        # Show animation only if it loads; otherwise show nothing
         if lottie:
+            st.markdown('<div class="card fadeUp floaty">', unsafe_allow_html=True)
             st_lottie(lottie, height=220, key="home_lottie")
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
     st.subheader("Try these examples")
