@@ -4,6 +4,29 @@ from utils import inject_css, load_artifacts, load_lottie_url
 
 # ---------- App config (ONLY here, not inside pages/*) ----------
 st.set_page_config(page_title="Toxicity Checker", page_icon="🧪", layout="wide")
+import base64
+
+def set_bg_from_url(image_url: str):
+    st.markdown(
+        f"""
+        <style>
+        /* Main app background */
+        [data-testid="stAppViewContainer"] {{
+            background: url("{image_url}") no-repeat center center fixed;
+            background-size: cover;
+        }}
+
+        /* Optional: make header transparent */
+        [data-testid="stHeader"] {{
+            background: rgba(0,0,0,0);
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+set_bg_from_url("https://files.catbox.moe/evxdoq.png")
+
 inject_css()
 
 # Optional: hide the left sidebar completely
@@ -74,3 +97,4 @@ pages = [
 
 nav = st.navigation(pages, position="top")
 nav.run()
+
