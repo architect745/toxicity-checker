@@ -1,6 +1,0 @@
-streamlit>=1.46.0
-numpy
-scikit-learn
-joblib
-requests
-streamlit-lottie
