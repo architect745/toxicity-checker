@@ -68,3 +68,32 @@ def explain_local(smiles: str, model, vectorizer, topk: int = 12):
     out = pd.concat([top_pos, top_neg], axis=0)
     out["contribution"] = out["contribution"].round(6)
     return out.reset_index(drop=True)
+
+
+import numpy as np
+import pandas as pd
+
+def top_global_ngrams(model, vectorizer, topk=20):
+    """
+    For linear models: show top n-grams pushing toward TOXIC (class 1)
+    and top pushing toward NON-TOXIC (class 0).
+    """
+    feat_names = vectorizer.get_feature_names_out()
+    coefs = model.coef_.ravel()
+
+    # If class order is weird, fix direction so positive coef means class 1
+    if hasattr(model, "classes_"):
+        classes = list(model.classes_)
+        if len(classes) == 2 and classes.index(1) != 1:
+            coefs = -coefs
+
+    idx_sorted = np.argsort(coefs)
+    top_neg = [(feat_names[i], float(coefs[i])) for i in idx_sorted[:topk]]
+    top_pos = [(feat_names[i], float(coefs[i])) for i in idx_sorted[-topk:][::-1]]
+
+    df_pos = pd.DataFrame(top_pos, columns=["ngram", "weight"])
+    df_neg = pd.DataFrame(top_neg, columns=["ngram", "weight"])
+    df_pos["weight"] = df_pos["weight"].round(6)
+    df_neg["weight"] = df_neg["weight"].round(6)
+    return df_pos, df_neg
+
