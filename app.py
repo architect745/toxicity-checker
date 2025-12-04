@@ -4,12 +4,10 @@ from utils import inject_css
 st.set_page_config(page_title="Toxicity Checker", page_icon="🧪", layout="centered")
 inject_css()
 
-st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
-st.markdown("## 🧪 Toxicity Checker (SR-p53)")
-st.markdown(
-    "<div class='muted'>Use the sidebar to open pages: Home, Predict, Explain, About.</div>",
-    unsafe_allow_html=True
-)
-st.markdown("</div>", unsafe_allow_html=True)
+home    = st.Page("pages/1_Home.py",    title="Home",    icon="🏠")
+predict = st.Page("pages/2_Predict.py", title="Predict", icon="🔮")
+explain = st.Page("pages/3_Explain.py", title="Explain", icon="🧠")
+about   = st.Page("pages/4_About.py",   title="About",   icon="ℹ️")
 
-st.info("If you don't see the sidebar, click the arrow (>) on the top-left.")
+nav = st.navigation([home, predict, explain, about], position="top")
+nav.run()
