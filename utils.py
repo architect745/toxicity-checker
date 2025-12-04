@@ -28,16 +28,10 @@ def inject_css():
 # ---------- Loading ----------
 @st.cache_resource
 def load_artifacts():
-    """
-    Expects: clintox_artifacts.joblib in repo root.
-    That file should contain:
-      vectorizer, tox_model, fda_model, best_threshold, label_note
-    """
     return joblib.load("clintox_artifacts.joblib")
 
 
 def load_lottie_url(url: str):
-    """Fetch a lottie JSON safely."""
     try:
         r = requests.get(url, timeout=10)
         if r.status_code != 200:
@@ -47,12 +41,22 @@ def load_lottie_url(url: str):
         return None
 
 
-# ---------- PubChem helpers ----------
+# ---------- PubChem ----------
+def _extract_smiles_from_properties(props: dict):
+    # Prefer IsomericSMILES if present, else CanonicalSMILES
+    s = props.get("IsomericSMILES") or props.get("CanonicalSMILES")
+    if not s:
+        return None
+    # remove salts/mixtures: keep largest fragment
+    return max(str(s).split("."), key=len)
+
+
 def pubchem_name_to_smiles(name: str):
     """
-    Convert a drug/compound name to Canonical SMILES using PubChem PUG REST.
-    Includes fallback (name->CID list -> SMILES).
-    Returns: (smiles, cid, error_message)
+    name -> (SMILES, CID, error)
+    Tries:
+      1) name -> property(IsomericSMILES,CanonicalSMILES,CID)
+      2) name -> CID list -> property(IsomericSMILES,CanonicalSMILES)
     """
     q = (name or "").strip()
     if not q:
@@ -60,19 +64,30 @@ def pubchem_name_to_smiles(name: str):
 
     q_enc = quote(q)
 
-    # 1) Direct: name -> SMILES + CID
-    url1 = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{q_enc}/property/CanonicalSMILES,CID/JSON"
+    # 1) Direct fetch (try both SMILES types)
+    url1 = (
+        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{q_enc}"
+        f"/property/IsomericSMILES,CanonicalSMILES,CID/JSON"
+    )
     try:
         r1 = requests.get(url1, timeout=12)
         if r1.status_code == 200:
             data = r1.json()
-            props = data["PropertyTable"]["Properties"][0]
-            smiles = props.get("CanonicalSMILES")
-            cid = props.get("CID")
-            if smiles:
-                # remove salts/mixtures: keep biggest fragment
-                smiles = max(str(smiles).split("."), key=len)
-                return smiles, cid, None
+            # PubChem sometimes returns Fault JSON
+            if "Fault" in data:
+                return None, None, data["Fault"].get("Message", "PubChem error. Try another name.")
+
+            props_list = data.get("PropertyTable", {}).get("Properties", [])
+            # If multiple matches, pick first that actually has SMILES
+            for props in props_list:
+                cid = props.get("CID")
+                smiles = _extract_smiles_from_properties(props)
+                if smiles:
+                    return smiles, cid, None
+            # If we got here, no entry in the list had SMILES
+            # but there may still be a CID
+            cid0 = props_list[0].get("CID") if props_list else None
+            return None, cid0, "PubChem returned no SMILES for this compound."
     except Exception:
         pass
 
@@ -89,18 +104,23 @@ def pubchem_name_to_smiles(name: str):
 
         cid = cid_list[0]
 
-        # 3) CID -> SMILES
-        url3 = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/CanonicalSMILES/JSON"
+        # 3) CID -> SMILES (try both SMILES types)
+        url3 = (
+            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}"
+            f"/property/IsomericSMILES,CanonicalSMILES/JSON"
+        )
         r3 = requests.get(url3, timeout=12)
         if r3.status_code != 200:
             return None, cid, "Found a CID but couldn't fetch SMILES. Try another name."
 
-        props = r3.json()["PropertyTable"]["Properties"][0]
-        smiles = props.get("CanonicalSMILES")
+        data3 = r3.json()
+        if "Fault" in data3:
+            return None, cid, data3["Fault"].get("Message", "PubChem error. Try another name.")
+
+        props = data3["PropertyTable"]["Properties"][0]
+        smiles = _extract_smiles_from_properties(props)
         if not smiles:
             return None, cid, "PubChem returned no SMILES for this compound."
-
-        smiles = max(str(smiles).split("."), key=len)
         return smiles, cid, None
 
     except Exception:
@@ -109,24 +129,15 @@ def pubchem_name_to_smiles(name: str):
 
 # ---------- Explainability ----------
 def _safe_class1_coef(model):
-    """
-    Returns coefficients aligned so positive means pushing toward class 1.
-    Works for binary linear classifiers (LogisticRegression).
-    """
     coefs = model.coef_.ravel().copy()
     if hasattr(model, "classes_"):
         classes = list(model.classes_)
-        # if class 1 is not at index 1, swap direction
         if len(classes) == 2 and classes.index(1) != 1:
             coefs = -coefs
     return coefs
 
 
 def explain_local(smiles: str, model, vectorizer, topk: int = 12):
-    """
-    Local explanation: contribution = tfidf_value * coef for features present in SMILES.
-    Returns dataframe with top positive and top negative contributions.
-    """
     X = vectorizer.transform([smiles])
     feat_names = vectorizer.get_feature_names_out()
     coefs = _safe_class1_coef(model)
@@ -140,7 +151,6 @@ def explain_local(smiles: str, model, vectorizer, topk: int = 12):
         return pd.DataFrame({"ngram": [], "contribution": []})
 
     df = df.sort_values("contribution", ascending=False)
-
     top_pos = df.head(topk)
     top_neg = df.tail(topk).sort_values("contribution", ascending=True)
 
@@ -150,9 +160,6 @@ def explain_local(smiles: str, model, vectorizer, topk: int = 12):
 
 
 def top_global_ngrams(model, vectorizer, topk: int = 20):
-    """
-    Global explanation: show n-grams with largest positive and negative weights.
-    """
     feat_names = vectorizer.get_feature_names_out()
     coefs = _safe_class1_coef(model)
 
