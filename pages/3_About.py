@@ -9,7 +9,7 @@ _, _, label_name = load_artifacts()
 
 st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
 st.markdown("## About this Mini Project")
-st.markdown("<div class='muted'>Explainable AI for drug toxicity prediction (demo).</div>", unsafe_allow_html=True)
+st.markdown("<div class='muted'>Explainable AI for drug toxicity prediction.</div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
