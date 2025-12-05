@@ -60,7 +60,7 @@ def home():
 
     st.markdown('<div class="card fadeUp">', unsafe_allow_html=True)
     st.subheader("Try these examples")
-    st.write("caffeine, aspirin, ibuprofen, metformin, acetaminophen")
+    st.write("caffeine, aspirin, ibuprofen, mitomycin c, etoposide")
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -74,3 +74,4 @@ pages = [
 
 nav = st.navigation(pages, position="top")
 nav.run()
+
